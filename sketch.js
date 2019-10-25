@@ -448,14 +448,14 @@ ScreenButton.prototype.display = function() {
 function toCoOrds(scrX, scrY) {
   let r = createVector();
   r.x = (scrX - 80) / gridSize;
-  r.y = (-scrY + 420) / gridSize;
+  r.y = (-scrY + 520) / gridSize;
   return r;
 }
 
 function fromCoOrds(x, y) {
   let scrR = createVector();
   scrR.x = x * gridSize + 80;
-  scrR.y = -y * gridSize + 420;
+  scrR.y = -y * gridSize + 520;
   return scrR;
 }
 

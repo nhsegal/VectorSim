@@ -13,9 +13,15 @@ let sumVec;
 let toggleComponents;
 let componentSetting = 0;
 let theActivatedVec;
+let img;
+let gridOn = true;
+
+function preload() {
+  img = loadImage('trash.png');
+}
 
 function setup() {
-  createCanvas(800, 500);
+  createCanvas(950, 600);
   rectMode(CENTER);
   sumArrow = new Arrow(5, 5, 0, 0, color(0, 180, 0));
 
@@ -26,6 +32,7 @@ function setup() {
       sumArrow.comp.x += arrow.comp.x;
       sumArrow.comp.y += arrow.comp.y;
     };
+    console.log(arrows);
   }
 
   toggleSum = function() {
@@ -60,33 +67,47 @@ function setup() {
     }
   }
 
-  buttons[0] = new ScreenButton(710, 50, 100, 40, "Make a Vector", color(250, 155, 155), makeArrow);
-  buttons[1] = new ScreenButton(710, 100, 100, 40, "Reset",
+  toggleGrid = function() {
+  gridOn = !gridOn;
+    if (gridOn) {
+      buttons[4].text = "Hide Grid";
+    } else {
+      buttons[4].text = "Show Grid";
+    }
+
+  }
+
+  buttons[0] = new ScreenButton(880, 50, 100, 40, "Make a Vector", color(250, 155, 155), makeArrow);
+  buttons[1] = new ScreenButton(880, 100, 100, 40, "Reset",
     color(250, 250, 100), () => {
       arrows = [];
       sumArrow.comp.mult(0)
+      theActivatedVec = undefined;
     });
-  buttons[2] = new ScreenButton(710, 150, 100, 40, "Show Sum", color(100, 250, 100), toggleSum);
-  buttons[3] = new ScreenButton(710, 200, 100, 40, "Show Components", color(130, 230, 230), toggleComponents);
-  console.log("ad");
-  //theActivatedVec = createVector(0, 0);
-
+  buttons[2] = new ScreenButton(880, 150, 100, 40, "Show Sum", color(100, 250, 100), toggleSum);
+  buttons[3] = new ScreenButton(880, 200, 100, 40, "Show Components", color(130, 230, 230), toggleComponents);
+  buttons[4] = new ScreenButton(880, 250, 100, 40, "Hide Grid", color(240, 130, 240), toggleGrid);
 }
 
 function draw() {
   background(237);
   strokeWeight(.2);
+  stroke(0);
   //grid
-  for (let i = 0; i < 80; i++) {
-    line(0, gridSize * i, width, gridSize * i);
-    line(gridSize * i, 0, gridSize * i, height);
+  if (gridOn) {
+    for (let i = 0; i < 80; i++) {
+      line(0, gridSize * i, width, gridSize * i);
+      line(gridSize * i, 0, gridSize * i, height);
+    }
   }
+
   //axes
   strokeWeight(2);
-  line(2 * gridSize, 21 * gridSize, width - 3 * gridSize, 21 * gridSize);
+  line(2 * gridSize, 26 * gridSize, width - 3 * gridSize, 26 * gridSize);
   strokeWeight(2);
   line(80, 40, 80, height - 2 * gridSize);
 
+  image(img, 860, 400, 60, 70);
   //Display buttons and arrows
   for (const button of buttons) {
     button.display();
@@ -111,39 +132,39 @@ function draw() {
   fill(0);
   textSize(32);
   text('y', 75, 30);
-  text('x', 770, 430);
+  text('x', 912, 527);
 
   fill(255);
-  rect(200, 40, 120, 40);
-  rect(330, 40, 110, 40);
-  rect(460, 40, 110, 40);
-  rect(580, 40, 110, 40);
+  rect(202, 40, 138, 40, 4);
+  rect(337, 40, 112, 40, 4);
+  rect(638, 40, 110, 40, 4);
+  rect(760, 40, 110, 40, 4);
   fill(0);
 
-  text("|R|=", 176, 50);
+  text("|R|=", 173, 50);
+  text("θ=", 304, 50);
 
-  text("θ=", 300, 50);
-
-
-  text("R", 428, 50);
+  text("R", 598, 50);
   textSize(16);
-  text("x", 442, 50);
+  text("x", 614, 50);
   textSize(32);
-  text("= ", 463, 50);
+  text("= ", 633, 50);
 
-  text("R", 547, 50);
+  text("R", 720, 50);
   textSize(16);
-  text("y", 561, 50);
+  text("y", 735, 50);
   textSize(32);
-  text("= ", 584, 50);
+  text("= ", 755, 50);
 
   textSize(32);
   if (typeof(theActivatedVec) != 'undefined') {
-    text(theActivatedVec.x.toString(), 492, 50);
-    text(theActivatedVec.y.toString(), 615, 50);
-    text(theActivatedVec.mag().toFixed(1), 235, 50 );
-    text(degrees(theActivatedVec.heading()).toFixed(0), 352, 50 );
+    text(theActivatedVec.x.toString(), 660, 50);
+    text(theActivatedVec.y.toString(), 785, 50);
+    text(theActivatedVec.mag().toFixed(1), 235, 50);
+    text(degrees(theActivatedVec.heading()).toFixed(0), 352, 50);
   }
+
+
 
 }
 
@@ -159,14 +180,21 @@ function Arrow(posX, posY, compX, compY, color) {
 
 Arrow.prototype.display = function() {
 
+  if (this.loc.x > 850 && this.loc.x < 900 && this.loc.y > 400 && this.loc.y < 550 && !this.bodyActivated) {
+    arrows.splice(arrows.indexOf(this), 1);
+    theActivatedVec = undefined;
+  }
+
   stroke(this.color);
   if (this.bodyActivated) {
+
     theActivatedVec = createVector(this.comp.x, this.comp.y);
     this.headActivated = false;
     this.loc = fromCoOrds(this.pos.x, this.pos.y);
     this.pos = toCoOrds((mouseX + offsetX), (mouseY + offsetY));
     this.pos.x = Math.round(this.pos.x);
     this.pos.y = Math.round(this.pos.y);
+
   }
 
   if (this.headActivated) {
@@ -196,7 +224,7 @@ Arrow.prototype.display = function() {
   pop();
 
   if (componentSetting == 1) {
-    if (this.color.rgba[0] == 250) {
+    if (this.color.levels[0] == 250) {
       stroke(255, 120, 120);
     } else {
       stroke(20, 150, 20);
@@ -227,7 +255,7 @@ Arrow.prototype.display = function() {
   }
 
   if (componentSetting == 2) {
-    if (this.color.rgba[0] == 250) {
+    if (this.color.levels[0] == 250) {
       stroke(255, 120, 120);
     } else {
       stroke(20, 150, 20);
@@ -258,7 +286,7 @@ Arrow.prototype.display = function() {
   }
 
   if (componentSetting == 3) {
-    if (this.color.rgba[0] == 250) {
+    if (this.color.levels[0] == 250) {
       stroke(255, 120, 120);
     } else {
       stroke(20, 150, 20);
@@ -408,12 +436,13 @@ function ScreenButton(locX, locY, w, h, text, color, myFunction) {
 ScreenButton.prototype.display = function() {
   fill(this.color);
   stroke(0);
-  rect(this.loc.x, this.loc.y, this.w, this.h);
+  rect(this.loc.x, this.loc.y, this.w, this.h, 10);
   noStroke();
   textSize(16);
   textAlign(CENTER);
   fill(0);
-  text(this.text, this.loc.x, this.loc.y - 17, this.w, this.h);
+  text(this.text, this.loc.x, this.loc.y + 2, this.w, this.h);
+
 }
 
 function toCoOrds(scrX, scrY) {

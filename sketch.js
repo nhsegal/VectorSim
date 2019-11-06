@@ -1,10 +1,11 @@
-let arrows = [];
-let buttons = [];
+const gridSize = 20;
+const arrowSize = 9;
+const originX = 80;
+const originY = 520;
 let resetButton;
-let gridSize = 20;
+let img;
 let offsetX = 0;
 let offsetY = 0;
-let filler;
 let sumArrow;
 let toggleSum;
 let showSum = false;
@@ -13,8 +14,10 @@ let sumVec;
 let toggleComponents;
 let componentSetting = 0;
 let theActivatedVec;
-let img;
 let gridOn = true;
+let arrows = [];
+let buttons = [];
+
 
 function preload() {
   img = loadImage('trash.png');
@@ -24,18 +27,16 @@ function setup() {
   createCanvas(950, 600);
   rectMode(CENTER);
   sumArrow = new Arrow(5, 5, 0, 0, color(0, 180, 0));
-
-  makeArrow = function() {
+  makeArrow = function addNewArrowToArrows() {
     sumArrow.comp.mult(0);
     arrows.push(new Arrow(26, 13, 1, 4, color(250, 0, 0)));
-    for (const arrow of arrows) {
+    arrows.forEach((arrow) => {
       sumArrow.comp.x += arrow.comp.x;
       sumArrow.comp.y += arrow.comp.y;
-    };
-    console.log(arrows);
+    });
   }
 
-  toggleSum = function() {
+  toggleSum = function toggleDisplayOfSumOfVectors() {
     if (showSum) {
       buttons[2].text = "Hide Sum";
       showSum = false;
@@ -45,13 +46,13 @@ function setup() {
     }
   }
 
-  isHeadActivated = function(obj) {
+  isHeadActivated = function checkIfObjectHeadActivated(obj) {
     if (obj.headActivated) {
       return true;
     }
   }
 
-  toggleComponents = function() {
+  toggleComponents = function toggleDifferentComponentStyles() {
     componentSetting = (componentSetting + 1) % 4;
     if (componentSetting == 0) {
       buttons[3].text = "Show Components";
@@ -67,8 +68,8 @@ function setup() {
     }
   }
 
-  toggleGrid = function() {
-  gridOn = !gridOn;
+  toggleGrid = function ShowOrHideGrid() {
+    gridOn = !gridOn;
     if (gridOn) {
       buttons[4].text = "Hide Grid";
     } else {
@@ -93,7 +94,7 @@ function draw() {
   background(237);
   strokeWeight(.2);
   stroke(0);
-  //grid
+  //Draw grid
   if (gridOn) {
     for (let i = 0; i < 80; i++) {
       line(0, gridSize * i, width, gridSize * i);
@@ -101,28 +102,31 @@ function draw() {
     }
   }
 
-  //axes
+  //Axes
   strokeWeight(2);
-  line(2 * gridSize, 26 * gridSize, width - 3 * gridSize, 26 * gridSize);
+  line(originX - 2 * gridSize, originY, originX + 40 * gridSize, originY);
   strokeWeight(2);
-  line(80, 40, 80, height - 2 * gridSize);
+  line(originX, 2 * gridSize, originX, originY + 2 * gridSize);
 
+  //TrashCan
   image(img, 860, 400, 60, 70);
-  //Display buttons and arrows
-  for (const button of buttons) {
+
+  buttons.forEach((button) => {
     button.display();
-  }
-  for (const arrow of arrows) {
+  });
+
+  arrows.forEach((arrow) => {
     arrow.display();
-  }
+  });
+
 
   if (arrows.filter(isHeadActivated).length) {
     sumArrow.comp.mult(0);
-    for (const arrow of arrows) {
+
+    arrows.forEach((arrow) => {
       sumArrow.comp.x += arrow.comp.x;
       sumArrow.comp.y += arrow.comp.y;
-    };
-
+    })
   }
 
   if (showSum && (sumArrow.comp.x || sumArrow.comp.y)) {
@@ -136,7 +140,7 @@ function draw() {
 
   fill(255);
   rect(202, 40, 138, 40, 4);
-  rect(337, 40, 112, 40, 4);
+  rect(342, 40, 118, 40, 4);
   rect(638, 40, 110, 40, 4);
   rect(760, 40, 110, 40, 4);
   fill(0);
@@ -161,287 +165,185 @@ function draw() {
     text(theActivatedVec.x.toString(), 660, 50);
     text(theActivatedVec.y.toString(), 785, 50);
     text(theActivatedVec.mag().toFixed(1), 235, 50);
-    text(degrees(theActivatedVec.heading()).toFixed(0), 352, 50);
+    text(degrees(theActivatedVec.heading()).toFixed(0)+'°', 362, 50);
+
+
   }
-
-
-
 }
 
 //loc is in terms of screen location, pos and comps are in math co-Ords)
-function Arrow(posX, posY, compX, compY, color) {
-  this.pos = createVector(posX, posY);
-  this.comp = createVector(compX, compY);
-  this.loc = fromCoOrds(this.pos.x, this.pos.y)
-  this.bodyActivated = false;
-  this.headActivated = false;
-  this.color = color;
-}
-
-Arrow.prototype.display = function() {
-
-  if (this.loc.x > 850 && this.loc.x < 900 && this.loc.y > 400 && this.loc.y < 550 && !this.bodyActivated) {
-    arrows.splice(arrows.indexOf(this), 1);
-    theActivatedVec = undefined;
-  }
-
-  stroke(this.color);
-  if (this.bodyActivated) {
-
-    theActivatedVec = createVector(this.comp.x, this.comp.y);
-    this.headActivated = false;
-    this.loc = fromCoOrds(this.pos.x, this.pos.y);
-    this.pos = toCoOrds((mouseX + offsetX), (mouseY + offsetY));
-    this.pos.x = Math.round(this.pos.x);
-    this.pos.y = Math.round(this.pos.y);
-
-  }
-
-  if (this.headActivated) {
-    theActivatedVec = createVector(this.comp.x, this.comp.y);
+class Arrow {
+  constructor(posX, posY, compX, compY, color) {
+    this.pos = createVector(posX, posY);
+    this.comp = createVector(compX, compY);
+    this.loc = fromCoOrds(this.pos.x, this.pos.y)
     this.bodyActivated = false;
-    let mouseVec = toCoOrds(mouseX, mouseY);
-    this.comp.x = Math.round(mouseVec.x - this.pos.x);
-    this.comp.y = Math.round(mouseVec.y - this.pos.y);
+    this.headActivated = false;
+    this.color = color;
   }
-
-  push();
-  strokeWeight(3);
-  strokeJoin(ROUND);
-
-  translate(this.loc.x, this.loc.y);
-  let R = this.comp.mag();
-  rotate(-this.comp.heading());
-  beginShape();
-  vertex(0, 0);
-  vertex(R * gridSize, 0);
-  vertex(R * gridSize - 8, -5);
-  vertex(R * gridSize, 0);
-  vertex(R * gridSize - 8, 5);
-  vertex(R * gridSize, 0);
-  vertex(0, 0);
-  endShape(CLOSE);
-  pop();
-
-  if (componentSetting == 1) {
-    if (this.color.levels[0] == 250) {
-      stroke(255, 120, 120);
-    } else {
-      stroke(20, 150, 20);
+  display() {
+    //Garbage
+    if (this.loc.x + this.comp.x * gridSize / 2 > 860 && this.loc.x + this.comp.x * gridSize / 2 < 920 && this.loc.y - this.comp.y * gridSize / 2 > 400 && this.loc.y - this.comp.y * gridSize / 2 < 470 && !this.bodyActivated) {
+      arrows.splice(arrows.indexOf(this), 1);
+      theActivatedVec = undefined;
+      sumArrow.comp.mult(0);
+      arrows.forEach((arrow) => {
+        sumArrow.comp.x += arrow.comp.x;
+        sumArrow.comp.y += arrow.comp.y;
+      });
     }
-
-    push();
-    translate(this.loc.x, this.loc.y);
-    beginShape();
-    vertex(0, 0);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), -5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), 5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(0, 0);
-    endShape(CLOSE);
-
-    beginShape();
-    vertex(0, 0);
-    vertex(0, -this.comp.y * gridSize);
-    vertex(-5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(0, 0);
-    endShape(CLOSE);
-    pop();
-  }
-
-  if (componentSetting == 2) {
-    if (this.color.levels[0] == 250) {
-      stroke(255, 120, 120);
-    } else {
-      stroke(20, 150, 20);
-    }
-    push();
-    translate(this.loc.x, this.loc.y);
-    beginShape();
-    vertex(0, 0);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), -5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), 5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(0, 0);
-    endShape(CLOSE);
-
-    beginShape();
-    translate(this.comp.x * gridSize, 0);
-    vertex(0, 0);
-    vertex(0, -this.comp.y * gridSize);
-    vertex(-5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(0, 0);
-    endShape(CLOSE);
-    pop();
-  }
-
-  if (componentSetting == 3) {
-    if (this.color.levels[0] == 250) {
-      stroke(255, 120, 120);
-    } else {
-      stroke(20, 150, 20);
-    }
-    push();
-    translate(this.loc.x, this.loc.y + this.pos.y * gridSize);
-    beginShape();
-    vertex(0, 0);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), -5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(this.comp.x * gridSize - 8 * Math.sign(this.comp.x), 5);
-    vertex(this.comp.x * gridSize, 0);
-    vertex(0, 0);
-    endShape(CLOSE);
-    line(0, 0, 0, -this.pos.y * gridSize);
-    line(this.comp.x * gridSize, 0, this.comp.x * gridSize, -this.pos.y * gridSize - this.comp.y * gridSize);
-    pop();
-
-    push();
-    beginShape();
-    translate(this.loc.x - this.pos.x * gridSize, this.loc.y);
-    vertex(0, 0);
-    vertex(0, -this.comp.y * gridSize);
-    vertex(-5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(5, -this.comp.y * gridSize + 8 * Math.sign(this.comp.y));
-    vertex(0, -this.comp.y * gridSize);
-    vertex(0, 0);
-    endShape(CLOSE);
-    line(0, 0, this.pos.x * gridSize, 0);
-    line(0, -this.comp.y * gridSize, this.comp.x * gridSize + this.pos.x * gridSize, -this.comp.y * gridSize);
-    pop();
-  }
-};
-
-Arrow.prototype.bodyCheck = function() {
-  for (let i = 0; i < arrows.length; i++) {
-    if (arrows[i].bodyActivated || arrows[i].headActivated) {
-      this.bodyActivated = false;
-      return;
-    }
-  }
-  if (this.comp.x >= 0 && this.comp.y >= 0) {
-    if (mouseX >= this.loc.x - gridSize / 5 &&
-      mouseX <= this.loc.x + gridSize / 5 + .8 * this.comp.x * gridSize &&
-      mouseY <= this.loc.y + gridSize / 5 &&
-      mouseY >= this.loc.y - .8 * this.comp.y * gridSize - gridSize / 5 &&
-      pointLineDist(mouseX, mouseY, this.loc.x, this.loc.y,
-        this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize) < gridSize / 5
-    ) {
-      this.bodyActivated = !this.bodyActivated;
-      offsetX = this.loc.x - mouseX;
-      offsetY = this.loc.y - mouseY;
-      return;
-    }
-  }
-  if (this.comp.x <= 0 && this.comp.y >= 0) {
-    if (mouseX <= this.loc.x + gridSize / 5 &&
-      mouseX >= this.loc.x - gridSize / 5 + .8 * this.comp.x * gridSize &&
-      mouseY <= this.loc.y + gridSize / 5 &&
-      mouseY >= this.loc.y - .8 * this.comp.y * gridSize - gridSize / 5 &&
-      pointLineDist(mouseX, mouseY, this.loc.x, this.loc.y,
-        this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize) < gridSize / 5
-    ) {
-      this.bodyActivated = !this.bodyActivated;
-      offsetX = this.loc.x - mouseX;
-      offsetY = this.loc.y - mouseY;
-      return;
-    }
-  }
-  if (this.comp.x >= 0 && this.comp.y <= 0) {
-    if (mouseX >= this.loc.x - gridSize / 5 &&
-      mouseX <= this.loc.x + gridSize / 5 + .8 * this.comp.x * gridSize &&
-      mouseY >= this.loc.y + gridSize / 5 &&
-      mouseY <= this.loc.y - .8 * this.comp.y * gridSize - gridSize / 5 &&
-      pointLineDist(mouseX, mouseY, this.loc.x, this.loc.y,
-        this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize) < gridSize / 5
-    ) {
-      this.bodyActivated = !this.bodyActivated;
-      offsetX = this.loc.x - mouseX;
-      offsetY = this.loc.y - mouseY;
-      return;
-    }
-  }
-  if (this.comp.x <= 0 && this.comp.y <= 0) {
-    if (mouseX <= this.loc.x + gridSize / 5 &&
-      mouseX >= this.loc.x - gridSize / 5 + .8 * this.comp.x * gridSize &&
-      mouseY >= this.loc.y + gridSize / 5 &&
-      mouseY <= this.loc.y - .8 * this.comp.y * gridSize - gridSize / 5 &&
-      pointLineDist(mouseX, mouseY, this.loc.x, this.loc.y,
-        this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize) < gridSize / 5
-    ) {
-      this.bodyActivated = !this.bodyActivated;
-      offsetX = this.loc.x - mouseX;
-      offsetY = this.loc.y - mouseY;
-      return;
-    }
-  }
-};
-
-Arrow.prototype.headCheck = function() {
-  for (let i = 0; i < arrows.length; i++) {
-    if (arrows[i].bodyActivated || arrows[i].headActivated) {
+    if (this.bodyActivated) {
+      theActivatedVec = createVector(this.comp.x, this.comp.y);
       this.headActivated = false;
+      this.loc = fromCoOrds(this.pos.x, this.pos.y);
+      this.pos = toCoOrds((mouseX + offsetX), (mouseY + offsetY));
+      this.pos.x = Math.round(this.pos.x);
+      this.pos.y = Math.round(this.pos.y);
+    }
+    if (this.headActivated) {
+      theActivatedVec = createVector(this.comp.x, this.comp.y);
+      this.bodyActivated = false;
+      let mouseVec = toCoOrds(mouseX, mouseY);
+      this.comp.x = Math.round(mouseVec.x - this.pos.x);
+      this.comp.y = Math.round(mouseVec.y - this.pos.y);
+    }
+    drawArrow(this.loc, this.comp.mag(), arrowSize, this.comp.heading(), this.color, 255);
+    if (componentSetting == 1) {
+      if (this.comp.x != 0) {
+        drawArrow(this.loc, abs(this.comp.x), arrowSize / 2, createVector(this.comp.x, 0).heading(), this.color, 100);
+      }
+      if (this.comp.y != 0) {
+        drawArrow(this.loc, abs(this.comp.y), arrowSize / 2, createVector(0, this.comp.y).heading(), this.color, 100);
+      }
+    }
+    if (componentSetting == 2) {
+      if (this.comp.x != 0) {
+        drawArrow(this.loc, abs(this.comp.x), arrowSize / 2, createVector(this.comp.x, 0).heading(), this.color, 100);
+      }
+      if (this.comp.y != 0) {
+        drawArrow(createVector(this.comp.x * gridSize + this.loc.x, this.loc.y), abs(this.comp.y), arrowSize / 2, createVector(0, this.comp.y).heading(), this.color, 100);
+      }
+    }
+    if (componentSetting == 3) {
+      if (this.comp.x != 0) {
+        drawArrow(createVector(this.loc.x, this.loc.y + this.pos.y * gridSize), abs(this.comp.x), arrowSize / 2, createVector(this.comp.x, 0).heading(), this.color, 250);
+      }
+      if (this.comp.y != 0) {
+        drawArrow(createVector(-this.pos.x * gridSize + this.loc.x, this.loc.y), abs(this.comp.y), arrowSize / 2, createVector(0, this.comp.y).heading(), this.color, 250);
+      }
+      strokeWeight(.6);
+      line(this.loc.x, this.loc.y, this.loc.x, originY);
+      line(this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize, this.loc.x + this.comp.x * gridSize, originY);
+      line(this.loc.x, this.loc.y, originX, this.loc.y);
+      line(this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize, originX, this.loc.y - this.comp.y * gridSize);
+    }
+  }
+  bodyCheck() {
+    arrows.forEach((arrow) => {
+      if (arrow.bodyActivated || arrow.headActivated) {
+        this.bodyActivated = false;
+        console.log('here');
+        return;
+      }
+    });
+
+    let upperBoundX = Math.max(this.loc.x + 2, this.loc.x + this.comp.x * gridSize - arrowSize * Math.sign(this.comp.x));
+    let lowerBoundX = Math.min(this.loc.x - 2, this.loc.x + this.comp.x * gridSize - arrowSize * Math.sign(this.comp.x));
+    let upperBoundY = Math.max(this.loc.y + 2, this.loc.y - this.comp.y * gridSize + arrowSize * Math.sign(this.comp.y));
+    let lowerBoundY = Math.min(this.loc.y - 2, this.loc.y - this.comp.y * gridSize + arrowSize * Math.sign(this.comp.y));
+
+    if (mouseX >= lowerBoundX &&
+      mouseX <= upperBoundX &&
+      mouseY >= lowerBoundY &&
+      mouseY <= upperBoundY &&
+      pointLineDist(mouseX, mouseY, this.loc.x, this.loc.y,
+        this.loc.x + this.comp.x * gridSize, this.loc.y - this.comp.y * gridSize) < gridSize / 5
+    ) {
+      this.bodyActivated = !this.bodyActivated;
+
+      if (this.bodyActivated) {
+        arrows.forEach((arrow) => {
+          if (arrow != this) {
+            arrow.bodyActivated = false;
+          }
+        });
+      }
+      offsetX = this.loc.x - mouseX;
+      offsetY = this.loc.y - mouseY;
       return;
     }
   }
-  if (dist(this.loc.x + gridSize * this.comp.x,
-      this.loc.y - gridSize * this.comp.y, mouseX, mouseY) < gridSize / 2) {
-    sumArrow.comp.x = 0;
-    sumArrow.comp.y = 0;
-    for (const arrow of arrows) {
-      sumArrow.comp.x += arrow.comp.x;
-      sumArrow.comp.y += arrow.comp.y;
-    };
-    this.headActivated = !this.headActivated;
+  headCheck() {
+    arrows.forEach((arrow) => {
+      if (arrow.bodyActivated || arrow.headActivated) {
+        this.headActivated = false;
+        return;
+      }
+    });
+
+    let lowerBoundX = Math.min(this.loc.x + this.comp.x * gridSize - arrowSize * Math.sign(this.comp.x) - 4, this.loc.x + this.comp.x * gridSize - 4);
+    let upperBoundX = Math.max(this.loc.x + this.comp.x * gridSize - arrowSize * Math.sign(this.comp.x) + 4, this.loc.x + this.comp.x * gridSize + 4);
+    let lowerBoundY = Math.min(this.loc.y - this.comp.y * gridSize + arrowSize * Math.sign(this.comp.y) - 4, this.loc.y - this.comp.y * gridSize - 4);
+    let upperBoundY = Math.max(this.loc.y - this.comp.y * gridSize + arrowSize * Math.sign(this.comp.y) + 4, this.loc.y - this.comp.y * gridSize + 4);
+
+    if (mouseX >= lowerBoundX &&
+      mouseX <= upperBoundX &&
+      mouseY >= lowerBoundY &&
+      mouseY <= upperBoundY) {
+      sumArrow.comp.mult(0);
+      arrows.forEach((arrow) => {
+        sumArrow.comp.x += arrow.comp.x;
+        sumArrow.comp.y += arrow.comp.y;
+      });
+      this.headActivated = !this.headActivated;
+      if (this.headActivated) {
+        arrows.forEach((arrow) => {
+          if (arrow != this) {
+            arrow.headActivated = false;
+            arrow.headActivated = false;
+          }
+        });
+      }
+    }
   }
 }
 
-function mousePressed() {
-  for (const button of buttons) {
+function mouseReleased() {
+  buttons.forEach((button) => {
     if (mouseX > button.loc.x - button.w / 2 && mouseX < button.loc.x + button.w / 2 &&
       mouseY > button.loc.y - button.h / 2 && mouseY < button.loc.y + button.h / 2
     ) {
       button.myFunction();
     }
-  }
+  });
 
-  for (const arrow of arrows) {
+  arrows.forEach((arrow) => {
     arrow.bodyCheck();
     arrow.headCheck();
-  }
+  });
 
   sumArrow.bodyCheck();
-}
+};
 
-function ScreenButton(locX, locY, w, h, text, color, myFunction) {
-  this.loc = createVector(locX, locY);
-  this.w = w;
-  this.h = h;
-  this.text = text;
-  this.color = color;
-  this.myFunction = myFunction;
-}
-
-ScreenButton.prototype.display = function() {
-  fill(this.color);
-  stroke(0);
-  rect(this.loc.x, this.loc.y, this.w, this.h, 10);
-  noStroke();
-  textSize(16);
-  textAlign(CENTER);
-  fill(0);
-  text(this.text, this.loc.x, this.loc.y + 2, this.w, this.h);
+class ScreenButton{
+  constructor(locX, locY, w, h, text, color, myFunction){
+    this.loc = createVector(locX, locY);
+    this.w = w;
+    this.h = h;
+    this.text = text;
+    this.color = color;
+    this.myFunction = myFunction;
+  }
+  display(){
+    fill(this.color);
+    stroke(0);
+    rect(this.loc.x, this.loc.y, this.w, this.h, 10);
+    noStroke();
+    textSize(16);
+    textAlign(CENTER);
+    fill(0);
+    text(this.text, this.loc.x, this.loc.y + 2, this.w, this.h);
+  }
 
 }
 
@@ -462,4 +364,19 @@ function fromCoOrds(x, y) {
 function pointLineDist(x0, y0, x1, y1, x2, y2) {
   return Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1) /
     sqrt(sq(y2 - y1) + sq(x2 - x1));
+}
+
+function drawArrow(location, arrowLength, headSize, heading, col, alpha) {
+  col.setAlpha(alpha);
+  fill(col);
+  stroke(col);
+  push();
+  strokeWeight(3);
+  translate(location.x, location.y);
+  rotate(-heading);
+  let R = arrowLength * gridSize - gridSize / 4;
+  line(0, 0, R, 0);
+  translate(R - headSize, 0);
+  triangle(0, headSize / 2, 0, -headSize / 2, headSize, 0);
+  pop();
 }
